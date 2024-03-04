@@ -1,5 +1,7 @@
 
-
+from address_book import AddressBook, Phone, PhoneError, Record, BirthdayError
+from datetime import datetime
+from birthday_on_week import get_birthdays_per_week
 
 
 def parse_input(user_input):
@@ -17,50 +19,109 @@ def input_error(func):
             return "Contact not found."
         except IndexError:
             return "Please enter the correct format. Command is invalid."
+        except BirthdayError as e:
+            return str(e)
     return inner
 
+
 @input_error
-def add_contact(args, contacts):
+def add_contact(args, book):
     if len(args) != 2:
         raise ValueError
     name, phone = args
-    contacts[name] = phone
-    return "Contact added."
+    try:
+        record = book.find(name)
+        try:
+            record.add_phone(phone)
+            return "Phone added to existing contact."
+        except PhoneError as e:
+            return str(e)
+    except KeyError:
+        try:
+            record = Record(name)
+            record.add_phone(phone)
+            book.add_record(record)
+            return "Contact added."
+        except PhoneError as e:
+            return str(e)
 
 @input_error
-def change_contact(args, contacts):
+def change_contact(args, book):
     if len(args) != 2:
         raise ValueError
     name, new_phone = args
-    if name in contacts:
-        contacts[name] = new_phone
+    try:
+        record = book.find(name)
+        Phone(new_phone)
+        record.edit_phone(record.phones[0].value, new_phone)
         return "Contact updated."
-    else:
-        raise KeyError
+    except (KeyError, PhoneError) as e:
+        return str(e)
 
 @input_error    
-def show_phone(args, contacts):
+def show_phone(args, book):
     if len(args) < 1:
-        return "Invalid command. Please enter: phone [name]" 
-
-        # Return message not from Errors wraper, because Value Error message is incorrect for this case.
-        # Format here "phone [name]"
-    
+        return "Invalid command. Please enter: phone [name]"     
     name = args[0]
-    if name in contacts:
-        return contacts[name]
-    else:
+    try:
+        record = book.find(name)
+        phones = ', '.join(str(phone) for phone in record.phones)
+        return f"Phone number for {name}: {phones}"
+    except KeyError:
+        raise KeyError
+    
+def show_all(book):
+    if not book.data:
+        return "Address book is empty."
+    all_contacts_info = []
+    for name, record in book.data.items():
+        contact_info = f"Contact name: {name}, phones: {'; '.join(p.value for p in record.phones)}"
+        all_contacts_info.append(contact_info)
+    return "\n".join(all_contacts_info)
+
+@input_error
+def add_birthday(args, book):
+    if len(args) != 2:
+        return "Give me name and birthday please."
+    name, birthday = args
+    try:
+    #     datetime.strptime(birthday, "%d.%m.%Y")
+    # except BirthdayError as e:
+    #     return str(e)
+        datetime.strptime(birthday, "%d.%m.%Y")
+    except ValueError as e:
+        raise BirthdayError("Birthday must be in DD.MM.YYYY format.") from e
+    try:
+        record = book.find(name)
+        record.add_birthday(birthday)
+        return "Birthday added."
+    except KeyError:
         raise KeyError
 
-@input_error    
-def show_all(contacts):
-    if contacts:
-        return "\n".join([f"{name}: {phone}" for name, phone in contacts.items()])
-    else:
+@input_error
+def show_birthday(args, book):
+    if len(args) != 1:
+        raise ValueError
+    name = args[0]
+    try:
+        record = book.find(name)
+        birthday = record.birthday.value if record.birthday else 'Not set'
+        return f"Birthday for {name}: {birthday}"
+    except KeyError:
         raise KeyError
+
+@input_error      
+def birthdays(book):
+    try:
+        users = {name: record.birthday.value for name, record in book.data.items()}
+        birthdays_info = get_birthdays_per_week(users)
+        return birthdays_info
+    except KeyError:
+        raise KeyError
+
 
 def main():
-    contacts = {}
+    book = AddressBook()
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
@@ -74,16 +135,25 @@ def main():
             print("How can I help you?")
 
         elif command == "add":
-            print(add_contact(args, contacts))
+            print(add_contact(args, book))
 
         elif command == "change":
-            print(change_contact(args, contacts))
+            print(change_contact(args, book))
 
         elif command == "phone":
-            print(show_phone(args, contacts))
+            print(show_phone(args, book))
 
         elif command == "all":
-            print(show_all(contacts))
+            print(show_all(book))
+
+        elif command == "add-birthday":
+            print(add_birthday(args, book))
+
+        elif command == "show-birthday":
+            print(show_birthday(args, book))
+
+        elif command == "birthdays":
+            print(birthdays(book))
 
         else:
             print("Invalid command.")

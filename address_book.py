@@ -1,5 +1,13 @@
 
 from collections import UserDict
+from datetime import datetime
+from birthday_on_week import get_birthdays_per_week
+
+class PhoneError(Exception):
+    pass
+
+class BirthdayError(Exception):
+    pass
 
 class Field:
     def __init__(self, value):
@@ -15,13 +23,22 @@ class Name(Field):
 class Phone(Field):
     def __init__(self, value):
         if len(value) != 10 or not value.isdigit():
-            raise ValueError("Phone number must be 10 digits.")
+            raise PhoneError("Phone number must be 10 digits.")
+        super().__init__(value)
+
+class Birthday(Field):
+    def __init__(self, value):
+        try:
+            datetime.strptime(value, "%d.%m.%Y")
+        except BirthdayError:
+            raise BirthdayError("Birthday must be in DD.MM.YYYY format.")
         super().__init__(value)
 
 class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
+        self.birthday = None
 
     def add_phone(self, phone):
         phone = Phone(phone)
@@ -36,6 +53,10 @@ class Record:
                 phone.value = new_phone
                 return new_phone
         raise ValueError("Phone number not found.")
+    
+    def add_birthday(self, birthday):
+        self.birthday = Birthday(birthday)
+        return f"Birthday added: {birthday}"
 
     def find_phone(self, phone):
         for p in self.phones:
@@ -62,6 +83,10 @@ class AddressBook(UserDict):
         if name not in self.data:
             raise KeyError("Contact not found.")
         del self.data[name]
+
+    def birthdays(self):
+        users = {name: {"birthday": record.birthday.value} for name, record in self.data.items()}
+        return get_birthdays_per_week(users)
 
 
 

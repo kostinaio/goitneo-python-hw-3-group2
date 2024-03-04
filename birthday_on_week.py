@@ -13,9 +13,8 @@ def get_birthdays_per_week(users):
     today = datetime.today().date()
 
     #Перебір користувачів
-    for user in users:
-        name = user["name"]
-        birthday = user["birthday"].date()  # Конвертуємо до типу date
+    for name, birthday in users.items():
+        birthday = datetime.strptime(birthday, "%d.%m.%Y").date()  # Конвертуємо до типу date
         birthday_this_year = birthday.replace(year=today.year)
         if birthday_this_year < today:
             birthday_this_year = birthday_this_year.replace(year=today.year + 1) #Оцінка дати на цей рік
@@ -29,9 +28,11 @@ def get_birthdays_per_week(users):
                 day_of_week = 'Monday'  # Привітати в понеділок, якщо вихідний
             birthdays_per_week[day_of_week].append(name)
 
+    result = ""
     for day in weekdays:
         if birthdays_per_week[day]:
-            print(f"{day}: {', '.join(birthdays_per_week[day])}")
+            result += f"{day}: {', '.join(birthdays_per_week[day])}\n"
+    return result or "No birthdays next week."    
 
 # Приклад використання:
 # users = [
