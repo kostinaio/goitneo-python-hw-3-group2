@@ -110,14 +110,12 @@ def show_birthday(args, book):
     except KeyError:
         raise KeyError
 
-@input_error      
+    
 def birthdays(book):
-    try:
-        users = {name: record.birthday.value for name, record in book.data.items()}
-        birthdays_info = get_birthdays_per_week(users)
-        return birthdays_info
-    except KeyError:
-        raise KeyError
+    users = {name: record.birthday.value for name, record in book.data.items()}
+    birthdays_info = get_birthdays_per_week(users)
+    return birthdays_info
+
 
 
 def main():
