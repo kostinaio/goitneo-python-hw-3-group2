@@ -30,8 +30,8 @@ class Birthday(Field):
     def __init__(self, value):
         try:
             datetime.strptime(value, "%d.%m.%Y")
-        except BirthdayError:
-            raise BirthdayError("Birthday must be in DD.MM.YYYY format.")
+        except ValueError as e:
+            raise BirthdayError("Birthday must be in DD.MM.YYYY format.") from e
         super().__init__(value)
 
 class Record:
