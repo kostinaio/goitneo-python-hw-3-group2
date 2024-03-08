@@ -84,13 +84,6 @@ def add_birthday(args, book):
     if len(args) != 2:
         return "Give me name and birthday please."
     name, birthday = args
-    # try:
-    # #     datetime.strptime(birthday, "%d.%m.%Y")
-    # # except BirthdayError as e:
-    # #     return str(e)
-    #     datetime.strptime(birthday, "%d.%m.%Y")
-    # except ValueError as e:
-    #     raise BirthdayError("Birthday must be in DD.MM.YYYY format.") from e
     try:
         record = book.find(name)
         record.add_birthday(birthday)
